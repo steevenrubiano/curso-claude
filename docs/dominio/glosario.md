@@ -15,6 +15,7 @@ Terminología del dominio y conceptos técnicos utilizados en el proyecto Restte
 | **Dish** | Plato de la carta de un restaurante. Tiene nombre, descripción, precio, categoría y puede estar disponible o no. |
 | **Ingredient** | Ingrediente utilizado en los platos. Tiene nombre, unidad de medida y stock actual. Pertenece a un restaurante. |
 | **DishIngredient** | Relación entre un plato y un ingrediente, con la cantidad necesaria. |
+| **Table** | Mesa de un restaurante. Tiene número (único por restaurante), descripción, capacidad y estado (`libre`, `ocupada`, `reservada`). El cliente ocupa una mesa libre antes de pedir. |
 | **Order** | Pedido realizado por un cliente. Contiene ítems (platos) y está asociado a un restaurante. |
 | **OrderItem** | Línea de un pedido: un plato con cantidad, notas opcionales y estado. |
 

@@ -36,6 +36,7 @@ export interface OrderRepository {
     updateItemStatus(orderId: string, itemId: string, status: string): Promise<void>
     findActiveByRestaurant(restaurantId: string): Promise<Order[]>
     findByClientId(clientId: string): Promise<Order[]>
+    findByTableIds(restaurantId: string, tableIds: string[]): Promise<Order[]>
 }
 
 export class SqliteOrderRepository implements OrderRepository {
@@ -134,6 +135,30 @@ export class SqliteOrderRepository implements OrderRepository {
                 items,
                 restaurantName: row.restaurant_name,
                 restaurantLogoUrl: row.restaurant_logo_url
+            })
+        }
+
+        return orders
+    }
+
+    async findByTableIds(restaurantId: string, tableIds: string[]): Promise<Order[]> {
+        if (tableIds.length === 0) return []
+        const placeholders = tableIds.map(() => '?').join(', ')
+        const orderRows = await this.db.all<OrderRow>(
+            `SELECT * FROM orders WHERE restaurant_id = ? AND table_id IN (${placeholders}) ORDER BY created_at ASC`,
+            [restaurantId, ...tableIds]
+        )
+
+        const orders: Order[] = []
+        for (const row of orderRows) {
+            const items = await this.getOrderItems(row.id)
+            orders.push({
+                id: row.id,
+                restaurantId: row.restaurant_id,
+                tableId: row.table_id,
+                clientId: row.client_id,
+                createdAt: new Date(row.created_at),
+                items
             })
         }
 

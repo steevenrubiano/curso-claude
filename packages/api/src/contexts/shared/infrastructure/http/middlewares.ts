@@ -39,3 +39,14 @@ export const authorize = (roles: string[]) => {
         next()
     }
 }
+
+const RESTAURANT_SCOPED_ROLES = ['manager', 'camarero', 'cocinero']
+
+export const restrictToOwnRestaurant = (req: AuthRequest, res: Response, next: NextFunction): void => {
+    const user = req.user
+    if (user && RESTAURANT_SCOPED_ROLES.includes(user.role) && user.restaurantId !== req.params['restaurantId']) {
+        res.status(403).json({ error: 'Forbidden: Insufficient permissions' })
+        return
+    }
+    next()
+}
