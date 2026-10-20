@@ -310,6 +310,28 @@ Todos cuelgan de `/api/v1`. La columna **Roles** indica qué valores de `req.use
 
 Los ingredientes son **más restrictivos** que los platos: solo `admin` puede crear, editar o borrar.
 
+### Mesas
+
+Contrato completo en `docs/api/gestion-mesas.openapi.yaml`. Las rutas fijas (`available`, `occupied-orders`) se registran antes de `/:id`.
+
+| Método | Ruta | Roles |
+| --- | --- | --- |
+| `POST` | `/api/v1/restaurants/:restaurantId/tables` | admin, manager |
+| `GET` | `/api/v1/restaurants/:restaurantId/tables` | admin, manager, camarero, cocinero (`?estado=`, `?minCapacidad=`) |
+| `GET` | `/api/v1/restaurants/:restaurantId/tables/available?people=N` | cliente, admin, manager, camarero |
+| `GET` | `/api/v1/restaurants/:restaurantId/tables/occupied-orders` | admin, manager, camarero, cocinero |
+| `GET` | `/api/v1/restaurants/:restaurantId/tables/:id` | admin, manager, camarero, cocinero |
+| `PUT` | `/api/v1/restaurants/:restaurantId/tables/:id` | admin, manager |
+| `DELETE` | `/api/v1/restaurants/:restaurantId/tables/:id` | admin, manager (409 si está ocupada) |
+| `PATCH` | `/api/v1/restaurants/:restaurantId/tables/:id/status` | admin, manager, camarero |
+| `POST` | `/api/v1/restaurants/:restaurantId/tables/:id/occupy` | cliente |
+
+- El middleware `restrictToOwnRestaurant` devuelve 403 si `manager`, `camarero` o `cocinero` operan sobre un restaurante distinto al de su JWT; `admin` y `cliente` no tienen esa restricción (en `occupy` tampoco se aplica).
+- `occupy` es atómico (`UPDATE ... WHERE estado = 'libre'` en `TableRepository.occupyIfFree`): si dos clientes compiten, uno recibe 409 `TableNotAvailableError`.
+- Errores nuevos: `InvalidTableError` (400), `TableNotFoundError` (404), y 409 para `TableNumberAlreadyExistsError`, `TableNotAvailableError` y `TableOccupiedError` (lista `CONFLICT_ERRORS` del `errorHandler`).
+- `POST /orders` valida que `tableId`, si viene, exista y pertenezca al `restaurantId` (404 `TableNotFoundError`; `OrderController` lo traduce a mano).
+- `occupied-orders` devuelve, por cada mesa ocupada, todos los pedidos con ese `tableId` (orden `createdAt` asc).
+
 ### Pedidos
 
 | Método | Ruta | Roles |
@@ -345,7 +367,7 @@ Ambos responden directamente, sin pasar por el `errorHandler`.
 
 Jerarquía: `Error` → `AppError` (abstracta) → errores específicos en `errors/DomainErrors.ts`. `AppError` asigna `this.name = this.constructor.name`, y el `errorHandler` decide el código HTTP a partir de ese nombre:
 
-- **404**: `EmployeeNotFoundError`, `RestaurantNotFoundError`, `IngredientNotFoundError`, `DishNotFoundError`
+- **404**: `EmployeeNotFoundError`, `RestaurantNotFoundError`, `IngredientNotFoundError`, `DishNotFoundError`, `TableNotFoundError`
 - **401**: `InvalidCredentialsError`
 - **400**: cualquier otro `AppError`
 - **500**: errores no controlados

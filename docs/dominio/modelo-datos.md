@@ -12,6 +12,8 @@ erDiagram
     restaurants ||--o{ ingredients : "tiene"
     restaurants ||--o{ dishes : "tiene"
     restaurants ||--o{ orders : "tiene"
+    restaurants ||--o{ tables : "tiene"
+    tables ||--o{ orders : "atendida en"
     dishes ||--o{ dish_ingredients : "contiene"
     ingredients ||--o{ dish_ingredients : "usado en"
     orders ||--o{ order_items : "contiene"
@@ -66,6 +68,15 @@ erDiagram
         TEXT dish_id PK_FK
         TEXT ingredient_id PK_FK
         REAL quantity
+    }
+
+    tables {
+        TEXT id PK
+        TEXT restaurant_id FK
+        INTEGER numero
+        TEXT descripcion
+        INTEGER capacidad
+        TEXT estado
     }
 
     orders {
@@ -182,6 +193,26 @@ Relación muchos-a-muchos entre platos e ingredientes.
 
 ---
 
+### `tables`
+
+Mesas de un restaurante.
+
+| Columna | Tipo | Nullable | Descripción |
+| --- | --- | --- | --- |
+| `id` | TEXT | No | UUID, clave primaria |
+| `restaurant_id` | TEXT | No | FK → `restaurants.id` |
+| `numero` | INTEGER | No | Número de mesa, entero > 0 |
+| `descripcion` | TEXT | No | Descripción libre (cadena vacía si no hay) |
+| `capacidad` | INTEGER | No | Número máximo de comensales, entero > 0 |
+| `estado` | TEXT | No | `libre`, `ocupada` o `reservada` (default: `libre`) |
+
+**Restricciones:**
+
+- `UNIQUE (restaurant_id, numero)`: el número es único por restaurante.
+- No hay auto-liberación: un empleado devuelve la mesa a `libre` manualmente.
+
+---
+
 ### `orders`
 
 Pedidos de los clientes.
@@ -190,7 +221,7 @@ Pedidos de los clientes.
 | --- | --- | --- | --- |
 | `id` | TEXT | No | UUID, clave primaria |
 | `restaurant_id` | TEXT | No | FK → `restaurants.id` |
-| `table_id` | TEXT | Sí | Identificador de mesa (opcional) |
+| `table_id` | TEXT | Sí | Mesa del pedido (opcional). Sin FK en BD: `OrderService` valida que exista y sea del restaurante |
 | `client_id` | TEXT | Sí | ID del cliente (opcional) |
 | `created_at` | TEXT | No | Fecha de creación |
 

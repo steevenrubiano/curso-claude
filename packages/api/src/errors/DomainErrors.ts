@@ -162,3 +162,33 @@ export class OrderNotFoundError extends AppError {
   }
 }
 
+
+export class InvalidTableError extends AppError {
+  constructor(message?: string) {
+    super(message ?? 'Invalid table')
+  }
+}
+
+export class TableNotFoundError extends AppError {
+  constructor() {
+    super('Table not found')
+  }
+}
+
+export class TableNumberAlreadyExistsError extends AppError {
+  constructor(numero?: number) {
+    super(numero === undefined ? 'Table number already exists' : `Table number ${numero} already exists in this restaurant`)
+  }
+}
+
+export class TableNotAvailableError extends AppError {
+  constructor() {
+    super('Table is no longer available')
+  }
+}
+
+export class TableOccupiedError extends AppError {
+  constructor() {
+    super('An occupied table cannot be deleted')
+  }
+}
